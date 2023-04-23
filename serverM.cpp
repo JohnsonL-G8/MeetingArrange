@@ -140,7 +140,7 @@ int main() {
     int nameLenB = 0;
     /* Get name list from A*/
     while(true){
-        std::cout << "Receiving Lists length from serverA" << std::endl;
+        //std::cout << "Receiving Lists length from serverA" << std::endl;
         int bytesReceived = recvfrom(udp_sockfd, buffer, sizeof(buffer), 0, (sockaddr*)&udp_cli_addr, 
         reinterpret_cast<socklen_t *>(&len));
         if (bytesReceived < 0) {
@@ -264,7 +264,7 @@ int main() {
         
         // (2) Check if input name exists
         for (std::string t : query_names) {
-            std::cout << t << std::endl;
+            // std::cout << t << std::endl;
             if(namesA.count(t)){
                 queryA.push_back(t);
                 continue;
@@ -494,4 +494,5 @@ int main() {
         // Close sockets
         close(client_sock);
     }
+    close(tcp_sockfd);
 }

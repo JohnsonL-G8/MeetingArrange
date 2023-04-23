@@ -120,7 +120,7 @@ int main() {
     */
     /* Send data to ServerM through UDP */
     int sockfd;
-    char buffer[1024];
+    char buffer[8192];
     struct sockaddr_in udp_cli_addr;
 
     // Creating socket file descriptor
@@ -205,7 +205,7 @@ int main() {
         }
 
         /* Receiving query list from serverM */
-        std::cout << "listening for the name lists" << std::endl;
+        // std::cout << "listening for the name lists" << std::endl;
         while(true){
             /* Forming UDP connection */
             len = sizeof(udp_cli_addr); // len is value/resuslt

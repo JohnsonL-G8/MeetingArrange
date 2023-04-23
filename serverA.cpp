@@ -119,7 +119,7 @@ int main() {
     */
     /* Send data to ServerM through UDP */
     int sockfd;
-    char buffer[1024];
+    char buffer[8192];
     struct sockaddr_in udp_cli_addr;
 
     // Creating socket file descriptor
