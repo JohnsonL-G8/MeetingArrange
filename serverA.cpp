@@ -104,15 +104,15 @@ int main() {
         intervals_map[username] = intervals;
         names.insert(username);
     }
-
-    std::cout << "printing the results:\n";
+    std::cout << "Server A is up and running using UDP on port 21443" << std::endl;
+    // std::cout << "printing the results:\n";
     // print out the intervals for each user
-    for (auto const & [username, intervals] : intervals_map) {
-        std::cout << "User " << username << " has the following intervals:\n";
-        for (auto const& interval : intervals) {
-            std::cout << "[" << interval.start << "," << interval.end << "]\n";
-        }
-    }
+    // for (auto const & [username, intervals] : intervals_map) {
+    //     std::cout << "User " << username << " has the following intervals:\n";
+    //     for (auto const& interval : intervals) {
+    //         std::cout << "[" << interval.start << "," << interval.end << "]\n";
+    //     }
+    // }
 
     /***
      * Send Name List
@@ -139,7 +139,7 @@ int main() {
     /*Send number of names*/
     int size = names.size();
     sendto(sockfd, &size, sizeof(size), 0, (const struct sockaddr*)&udp_cli_addr, sizeof(udp_cli_addr));
-    std::cout << size << std::endl;
+    // std::cout << size << std::endl;
 //    sssendto(sock, &num, sizeof(num), 0, (sockaddr*)&serverAddr, sizeof(serverAddr));
 
     for (const auto& name : names) {
@@ -147,7 +147,8 @@ int main() {
         strncpy(buffer, name.c_str(), sizeof(buffer));
         sendto(sockfd, buffer, strlen(buffer), 0, (const struct sockaddr*)&udp_cli_addr, sizeof(udp_cli_addr));
     }
-    
+
+    std::cout << "Server A finished sending a list of usernames to Main Server" << std::endl;
 
 
     /***
@@ -185,7 +186,7 @@ int main() {
         std::vector<std::string> query_names;
         /* Read query size */
         while(true){
-            std::cout << "Receiving query length from serverM" << std::endl;
+            // std::cout << "Receiving query length from serverM" << std::endl;
             int bytesReceived = recvfrom(udp_sockfd, buffer, sizeof(buffer), 0, (sockaddr*)&udp_cli_addr, 
             reinterpret_cast<socklen_t *>(&len));
             if (bytesReceived < 0) {
@@ -204,7 +205,7 @@ int main() {
         }
 
         /* Receiving query list from serverM */
-        std::cout << "listening for the name lists" << std::endl;
+        // std::cout << "listening for the name lists" << std::endl;
         while(true){
             /* Forming UDP connection */
             len = sizeof(udp_cli_addr); // len is value/resuslt
@@ -220,10 +221,12 @@ int main() {
             }
         }
 
-        for (const auto& t : query_names) {
-            std::cout << t + " ";
-        }
-        std::cout << "\n";
+        std::cout << "Server A received the usernames from Main Server using UDP over port 21443." << std::endl;
+
+        // for (const auto& t : query_names) {
+        //     std::cout << t + " ";
+        // }
+        // std::cout << "\n";
 
         /* Merge the intervals */
         std::vector<TimeInterval> combined;
@@ -239,17 +242,35 @@ int main() {
             combined = mergeInterval(combined, cur);
         }
 
-        // TODO: 
-        std::cout << "The intervals available are: \n";
+        std::string intervalStr = "[";
         for (auto const& interval : combined) {
-            std::cout << "[" << interval.start << "," << interval.end << "]\n";
+            intervalStr = intervalStr + "[" + std::to_string(interval.start) + ", " + std::to_string(interval.end) + "], ";
         }
+        if(intervalStr.size() > 1){
+            intervalStr.pop_back();
+            intervalStr.pop_back();
+        }
+        intervalStr = intervalStr + "]";
+
+        std::string names = "";
+        for(std::string name : query_names){
+            names = names + name + ", ";
+        }
+        names.pop_back();
+        names.pop_back();
+
+        std::cout << "Found the intersection result: " + intervalStr + " for " + names + "." << std::endl;
+        // // std::cout << "The intervals available are: \n";
+        // for (auto const& interval : combined) {
+        //     std::cout << "[" << interval.start << "," << interval.end << "]\n";
+        // }
 
         /* Send the result back to serverM */
         char* interval_buffer = new char[combined.size() * sizeof(TimeInterval)];
         memcpy(interval_buffer, combined.data(), combined.size() * sizeof(TimeInterval));
         ssize_t bytes_sent = sendto(sockfd, interval_buffer, combined.size() * sizeof(TimeInterval), 0, (struct sockaddr*)&udp_cli_addr, sizeof(udp_cli_addr));
-        std::cout << "Sent " << bytes_sent << " bytes to client: " << interval_buffer << "\n";
+        // std::cout << "Sent " << bytes_sent << " bytes to client: " << interval_buffer << "\n";
+        std::cout << "Server A finished sending the response to Main Server." << std::endl;
     }
 }
 

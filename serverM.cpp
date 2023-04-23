@@ -307,45 +307,16 @@ int main() {
             namesToA.pop_back();
             std::cout << "Found " + namesToA + " located at Server A. Send to Server A" << std::endl;
         }
-        std::cout << size << std::endl;
+        // std::cout << size << std::endl;
     //    sssendto(sock, &num, sizeof(num), 0, (sockaddr*)&serverAddr, sizeof(serverAddr));
 
         for (const auto& name : queryA) {
-            std::cout << "Sending name to A" << std::endl;
+            // std::cout << "Sending name to A" << std::endl;
             memset(buffer, 0, sizeof(buffer));
             strncpy(buffer, name.c_str(), sizeof(buffer));
             sendto(udp_sockfd_A, buffer, strlen(buffer), 0, (const struct sockaddr*)&udp_serv_addr, sizeof(udp_serv_addr));
         }
 
-        /* (4) Receiving the time intervals from serverA & B(UDP) */
-        char* intervals_buffer = new char[8192];
-        std::vector<TimeInterval> intervalsA;
-        while(true){
-            if(queryA.size() == 0){
-                break;
-            }
-            std::cout << "listening for result from A" << std::endl;
-            /* Forming UDP connection */
-            int numBytes = recvfrom(udp_sockfd_A, intervals_buffer, 8192, 0, NULL, NULL);
-            if (numBytes < 0) {
-                std::cerr << "Failed to receive interval data." << std::endl;
-                 return 1;
-            }
-
-            std::vector<TimeInterval> bufferA(numBytes / sizeof(TimeInterval));
-            memcpy(bufferA.data(), intervals_buffer, numBytes);
-            intervalsA = bufferA;
-            if(numBytes > 0){
-                break;
-            }
-        }
-        for (auto const& interval : intervalsA) {
-            std::cout << "[" << interval.start << "," << interval.end << "]\n";
-        }
-
-
-        // (3) Sending names to serverA and serverB(UDP)
-        /* Send data to ServerB through UDP */
         // Creating socket file descriptor
         udp_sockfd_B = socket(AF_INET, SOCK_DGRAM, 0);
         if (udp_sockfd_B < 0) {
@@ -365,15 +336,13 @@ int main() {
         if(size > 0){
             sendto(udp_sockfd_B, &size, sizeof(size), 0, (const struct sockaddr*)&udp_serv_addr, sizeof(udp_serv_addr));
             std::string namesToB = "";
-            for(std::string name : queryA){
+            for(std::string name : queryB){
                 namesToB = namesToB + name + ", ";
             }
             namesToB.pop_back();
             namesToB.pop_back();
-            std::cout << "Found " + namesToB + " located at Server A. Send to Server A" << std::endl;
+            std::cout << "Found " + namesToB + " located at Server B. Send to Server B" << std::endl;
         }
-        std::cout << size << std::endl;
-    //    sssendto(sock, &num, sizeof(num), 0, (sockaddr*)&serverAddr, sizeof(serverAddr));
 
         for (const auto& name : queryB) {
             memset(buffer, 0, sizeof(buffer));
@@ -381,7 +350,42 @@ int main() {
             sendto(udp_sockfd_B, buffer, strlen(buffer), 0, (const struct sockaddr*)&udp_serv_addr, sizeof(udp_serv_addr));
         }
 
-        /* (4) Receiving the time intervals from serverA & B(UDP) */
+        /* (4) Receiving the time intervals from serverA(UDP) */
+        char* intervals_buffer = new char[8192];
+        std::vector<TimeInterval> intervalsA;
+        while(true){
+            if(queryA.size() == 0){
+                break;
+            }
+            // std::cout << "listening for result from A" << std::endl;
+            /* Forming UDP connection */
+            int numBytes = recvfrom(udp_sockfd_A, intervals_buffer, 8192, 0, NULL, NULL);
+            if (numBytes < 0) {
+                std::cerr << "Failed to receive interval data." << std::endl;
+                 return 1;
+            }
+
+            std::vector<TimeInterval> bufferA(numBytes / sizeof(TimeInterval));
+            memcpy(bufferA.data(), intervals_buffer, numBytes);
+            intervalsA = bufferA;
+            if(numBytes > 0){
+                break;
+            }
+        }
+        std::string intervalAStr = "[";
+        for (auto const& interval : intervalsA) {
+            intervalAStr = intervalAStr + "[" + std::to_string(interval.start) + ", " + std::to_string(interval.end) + "], ";
+        }
+        if(intervalAStr.size() > 1){
+            intervalAStr.pop_back();
+            intervalAStr.pop_back();
+        }
+        intervalAStr = intervalAStr + "]";
+        std::cout << "Main Server received from server A the intersection result using UDP over port 21443: " + intervalAStr << std::endl;
+
+
+
+        /* (4) Receiving the time intervals from serverB(UDP) */
         intervals_buffer = new char[8192];
         std::vector<TimeInterval> intervalsB;
         while(true){
@@ -403,16 +407,31 @@ int main() {
                 break;
             }
         }
-        // for (auto const& interval : intervalsB) {
-        //     std::cout << "[" << interval.start << "," << interval.end << "]\n";
-        // }
+        std::string intervalBStr = "[";
+        for (auto const& interval : intervalsB) {
+            intervalBStr = intervalBStr + "[" + std::to_string(interval.start) + ", " + std::to_string(interval.end) + "], ";
+        }
+        if(intervalBStr.size() > 1){
+            intervalBStr.pop_back();
+            intervalBStr.pop_back();
+        }
+        intervalBStr = intervalBStr + "]";
+        std::cout << "Main Server received from server B the intersection result using UDP over port 22443: " + intervalBStr << std::endl;
 
 
         /* (5) Merge the time intervals */
         std::vector<TimeInterval> intervals = mergeInterval(intervalsA, intervalsB);
+        std::string intervalStr = "[";
         for (auto const& interval : intervals) {
-            std::cout << "[" << interval.start << "," << interval.end << "]\n";
+            intervalStr = intervalStr + "[" + std::to_string(interval.start) + ", " + std::to_string(interval.end) + "], ";
         }
+        if(intervalStr.size() > 1){
+            intervalStr.pop_back();
+            intervalStr.pop_back();
+        }
+        intervalStr = intervalStr + "]";
+        std::cout << "Found the intersection between the results from server A and B: " + intervalStr << std::endl;
+        
 
         /* (6) Send the available intervals to client(TCP) */
         char* response = new char[intervals.size() * sizeof(TimeInterval)];
@@ -423,7 +442,7 @@ int main() {
             return 1;
         }
 
-        std::cout << "Sent " << bytes_sent << " bytes to client: " << response << "\n";
+        std::cout << "Main Server sent the result to the client." << std::endl;
 
         // Close sockets
         close(client_sock);

@@ -105,14 +105,15 @@ int main() {
         names.insert(username);
     }
 
-    std::cout << "printing the results:\n";
-    // print out the intervals for each user
-    for (auto const & [username, intervals] : intervals_map) {
-        std::cout << "User " << username << " has the following intervals:\n";
-        for (auto const& interval : intervals) {
-            std::cout << "[" << interval.start << "," << interval.end << "]\n";
-        }
-    }
+    std::cout << "Server B is up and running using UDP on port 22443" << std::endl;
+    // std::cout << "printing the results:\n";
+    // // print out the intervals for each user
+    // for (auto const & [username, intervals] : intervals_map) {
+    //     std::cout << "User " << username << " has the following intervals:\n";
+    //     for (auto const& interval : intervals) {
+    //         std::cout << "[" << interval.start << "," << interval.end << "]\n";
+    //     }
+    // }
 
     /***
      * Send Name List
@@ -139,7 +140,7 @@ int main() {
     /*Send number of names*/
     int size = names.size();
     sendto(sockfd, &size, sizeof(size), 0, (const struct sockaddr*)&udp_cli_addr, sizeof(udp_cli_addr));
-    std::cout << size << std::endl;
+    // std::cout << size << std::endl;
 //    sssendto(sock, &num, sizeof(num), 0, (sockaddr*)&serverAddr, sizeof(serverAddr));
 
     for (const auto& name : names) {
@@ -148,7 +149,7 @@ int main() {
         sendto(sockfd, buffer, strlen(buffer), 0, (const struct sockaddr*)&udp_cli_addr, sizeof(udp_cli_addr));
     }
     
-
+    std::cout << "Server B finished sending a list of usernames to Main Server" << std::endl;
 
     /***
      * Receive Query Names
@@ -220,10 +221,12 @@ int main() {
             }
         }
 
-        for (const auto& t : query_names) {
-            std::cout << t + " ";
-        }
-        std::cout << "\n";
+        std::cout << "Server B received the usernames from Main Server using UDP over port 22443." << std::endl;
+
+        // for (const auto& t : query_names) {
+        //     std::cout << t + " ";
+        // }
+        // std::cout << "\n";
 
         /* Merge the intervals */
         std::vector<TimeInterval> combined;
@@ -232,24 +235,38 @@ int main() {
         }
         for(std::string name : query_names){
             std::vector<TimeInterval> cur = intervals_map[name];
-            // for (auto const& interval : cur) {
-            //     std::cout << name + " [" << interval.start << "," << interval.end << "]\n";
-            // }
-            // std::cout << " Before merging...";
             combined = mergeInterval(combined, cur);
         }
 
-        // TODO: 
-        std::cout << "The intervals available are: \n";
+        std::string intervalStr = "[";
         for (auto const& interval : combined) {
-            std::cout << "[" << interval.start << "," << interval.end << "]\n";
+            intervalStr = intervalStr + "[" + std::to_string(interval.start) + ", " + std::to_string(interval.end) + "], ";
         }
+        if(intervalStr.size() > 1){
+            intervalStr.pop_back();
+            intervalStr.pop_back();
+        }
+        intervalStr = intervalStr + "]";
+
+        std::string names = "";
+        for(std::string name : query_names){
+            names = names + name + ", ";
+        }
+        names.pop_back();
+        names.pop_back();
+
+        std::cout << "Found the intersection result: " + intervalStr + " for " + names + "." << std::endl;
+        // std::cout << "The intervals available are: \n";
+        // for (auto const& interval : combined) {
+        //     std::cout << "[" << interval.start << "," << interval.end << "]\n";
+        // }
 
         /* Send the result back to serverM */
         char* interval_buffer = new char[combined.size() * sizeof(TimeInterval)];
         memcpy(interval_buffer, combined.data(), combined.size() * sizeof(TimeInterval));
         ssize_t bytes_sent = sendto(sockfd, interval_buffer, combined.size() * sizeof(TimeInterval), 0, (struct sockaddr*)&udp_cli_addr, sizeof(udp_cli_addr));
-        std::cout << "Sent " << bytes_sent << " bytes to client: " << interval_buffer << "\n";
+        // std::cout << "Sent " << bytes_sent << " bytes to client: " << interval_buffer << "\n";
+        std::cout << "Server B finished sending the response to Main Server." << std::endl;
     }
 }
 
