@@ -186,7 +186,7 @@ int main() {
         std::vector<std::string> query_names;
         /* Read query size */
         while(true){
-            std::cout << "Receiving query length from serverM" << std::endl;
+            // std::cout << "Receiving query length from serverM" << std::endl;
             int bytesReceived = recvfrom(udp_sockfd, buffer, sizeof(buffer), 0, (sockaddr*)&udp_cli_addr, 
             reinterpret_cast<socklen_t *>(&len));
             if (bytesReceived < 0) {
@@ -261,6 +261,10 @@ int main() {
         //     std::cout << "[" << interval.start << "," << interval.end << "]\n";
         // }
 
+        if(combined.size() == 0){
+            TimeInterval no_result = {-1, -1};
+            combined.push_back(no_result);
+        }
         /* Send the result back to serverM */
         char* interval_buffer = new char[combined.size() * sizeof(TimeInterval)];
         memcpy(interval_buffer, combined.data(), combined.size() * sizeof(TimeInterval));

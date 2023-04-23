@@ -53,6 +53,20 @@ std::vector<TimeInterval> mergeInterval(std::vector<TimeInterval> intervalsA, st
     return ret;
 }
 
+std::string parseInput(std::string input_str){
+    // iterate through each character in the input string
+    for (int i = 0; i < input_str.length(); i++) {
+        // if the current character is a space
+        if (input_str[i] == ' ') {
+            // skip all consecutive spaces until a non-space character is found
+            while (input_str[i + 1] == ' ') {
+                input_str.erase(i + 1, 1);  // erase the extra space
+            }
+        }
+    }
+    return input_str;
+}
+
 int main() {
     /* UDP connection */
     struct sockaddr_in udp_serv_addr, udp_cli_addr;
@@ -161,7 +175,7 @@ int main() {
         // std::copy(namesA.begin(), namesA.end(), 
         // std::ostream_iterator<std::string>(std::cout, " "));
     }
-    std::cout << "Main Server received the username list from server<A> using UDP over port <23443>." << std::endl;
+    std::cout << "Main Server received the username list from server A using UDP over port 23443." << std::endl;
 
     // for (auto it = namesA.begin(); it != namesA.end(); ++it) {
     //    std::cout << *it << " ";
@@ -203,7 +217,7 @@ int main() {
         }
     }
 
-    std::cout << "Main Server received the username list from server<B> using UDP over port <23443>." << std::endl;
+    std::cout << "Main Server received the username list from server B using UDP over port 23443." << std::endl;
 
 
     /***
@@ -237,6 +251,7 @@ int main() {
         }
 
         std::string client_input = tcp_buffer;
+        client_input = parseInput(client_input);
         std::vector<std::string> query_names, queryA, queryB, notExist;
         std::stringstream ss(client_input);
         std::string name;
@@ -245,7 +260,7 @@ int main() {
             query_names.push_back(name);
         }
 
-        std::cout << "Main Server received the request from client using TCP over port <24443>." << std::endl;
+        std::cout << "Main Server received the request from client using TCP over port 24443." << std::endl;
         
         // (2) Check if input name exists
         for (std::string t : query_names) {
@@ -269,8 +284,27 @@ int main() {
         if(name_return != ""){
             name_return.pop_back();
             name_return.pop_back();
-            std::cout << "<" + name_return + "> do not exist. Send a reply to the client." << std::endl;
-        } 
+            std::cout << name_return + " do not exist. Send a reply to the client." << std::endl;
+
+            // Send invalid names to client
+            char* invalid = new char[name_return.size()];
+            memcpy(invalid, name_return.data(), name_return.size());
+            ssize_t bytes_sent = send(client_sock, invalid, name_return.size(), 0);
+            if (bytes_sent == -1) {
+                std::cerr << "Failed to send response to client\n";
+                return 1;
+            }
+        }else{
+            char* invalid = new char[1];
+            std::string mark = "127";
+            memcpy(invalid, mark.data(), mark.size());
+            ssize_t bytes_sent = send(client_sock, invalid, mark.size(), 0);
+            if (bytes_sent == -1) {
+                std::cerr << "Failed to send response to client\n";
+                return 1;
+            }
+        }
+
         if(queryA.size() == 0 && queryB.size() == 0){
             continue;
         }
@@ -366,6 +400,8 @@ int main() {
             }
 
             std::vector<TimeInterval> bufferA(numBytes / sizeof(TimeInterval));
+            // std::string buffer_str = buffer;
+            // std::cout << "Check A data: " + buffer_str;
             memcpy(bufferA.data(), intervals_buffer, numBytes);
             intervalsA = bufferA;
             if(numBytes > 0){
@@ -373,12 +409,16 @@ int main() {
             }
         }
         std::string intervalAStr = "[";
-        for (auto const& interval : intervalsA) {
-            intervalAStr = intervalAStr + "[" + std::to_string(interval.start) + ", " + std::to_string(interval.end) + "], ";
-        }
-        if(intervalAStr.size() > 1){
-            intervalAStr.pop_back();
-            intervalAStr.pop_back();
+        if(intervalsA.size() == 1 && intervalsA[0].start == -1 && intervalsA[0].end == -1){
+            int a = 1;
+        }else{
+            for (auto const& interval : intervalsA) {
+                intervalAStr = intervalAStr + "[" + std::to_string(interval.start) + ", " + std::to_string(interval.end) + "], ";
+            }
+            if(intervalAStr.size() > 1){
+                intervalAStr.pop_back();
+                intervalAStr.pop_back();
+            }
         }
         intervalAStr = intervalAStr + "]";
         std::cout << "Main Server received from server A the intersection result using UDP over port 21443: " + intervalAStr << std::endl;
@@ -434,9 +474,16 @@ int main() {
         
 
         /* (6) Send the available intervals to client(TCP) */
-        char* response = new char[intervals.size() * sizeof(TimeInterval)];
-        memcpy(response, intervals.data(), intervals.size() * sizeof(TimeInterval));
-        ssize_t bytes_sent = send(client_sock, response, intervals.size() * sizeof(TimeInterval), 0);
+        // char* response = new char[intervals.size() * sizeof(TimeInterval)];
+        // memcpy(response, intervals.data(), intervals.size() * sizeof(TimeInterval));
+        // ssize_t bytes_sent = send(client_sock, response, intervals.size() * sizeof(TimeInterval), 0);
+        // if (bytes_sent == -1) {
+        //     std::cerr << "Failed to send response to client\n";
+        //     return 1;
+        // }
+        char* response = new char[intervalStr.size()];
+        memcpy(response, intervalStr.data(), intervalStr.size());
+        ssize_t bytes_sent = send(client_sock, response, intervalStr.size(), 0);
         if (bytes_sent == -1) {
             std::cerr << "Failed to send response to client\n";
             return 1;

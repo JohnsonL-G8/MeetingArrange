@@ -265,6 +265,11 @@ int main() {
         //     std::cout << "[" << interval.start << "," << interval.end << "]\n";
         // }
 
+        // Consider case where no results
+        if(combined.size() == 0){
+            TimeInterval no_result = {-1, -1};
+            combined.push_back(no_result);
+        }
         /* Send the result back to serverM */
         char* interval_buffer = new char[combined.size() * sizeof(TimeInterval)];
         memcpy(interval_buffer, combined.data(), combined.size() * sizeof(TimeInterval));
