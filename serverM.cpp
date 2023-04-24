@@ -421,7 +421,7 @@ int main() {
             }
         }
         intervalAStr = intervalAStr + "]";
-        std::cout << "Main Server received from server A the intersection result using UDP over port 21443: " + intervalAStr << std::endl;
+        std::cout << "Main Server received from server A the intersection result using UDP over port 23443: " + intervalAStr << std::endl;
 
 
 
@@ -456,7 +456,7 @@ int main() {
             intervalBStr.pop_back();
         }
         intervalBStr = intervalBStr + "]";
-        std::cout << "Main Server received from server B the intersection result using UDP over port 22443: " + intervalBStr << std::endl;
+        std::cout << "Main Server received from server B the intersection result using UDP over port 23443: " + intervalBStr << std::endl;
 
 
         /* (5) Merge the time intervals */

@@ -103,7 +103,7 @@ int main() {
                 count++;
             }
             invalid_names.insert(invalid);
-            std::cout << "invalid name size: " + std::to_string(invalid_names.size()) + "\n";
+            // std::cout << "invalid name size: " + std::to_string(invalid_names.size()) + "\n";
             if(invalid_names.size() == query_names.size()){
                 std::cout << "All input names are invalid" << std::endl;
                 std::cout << "-----Start a new request-----" << std::endl;
