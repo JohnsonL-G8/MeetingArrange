@@ -295,7 +295,7 @@ int main() {
                 return 1;
             }
         }else{
-            char* invalid = new char[1];
+            char* invalid = new char[3];
             std::string mark = "127";
             memcpy(invalid, mark.data(), mark.size());
             ssize_t bytes_sent = send(client_sock, invalid, mark.size(), 0);
