@@ -23,6 +23,16 @@ bool compareInterval(TimeInterval i1, TimeInterval i2)
     return (i1.start < i2.start);
 }  
 
+std::string remove_spaces(const std::string& str) {
+    std::string result;
+    for (char c : str) {
+        if (c != ' ') {
+            result += c;
+        }
+    }
+    return result;
+}
+
 std::vector<TimeInterval> mergeInterval(std::vector<TimeInterval> intervalsA, std::vector<TimeInterval> intervalsB){
     // std::cout << "Start merging...";
     std::vector<TimeInterval> ret;
@@ -59,7 +69,14 @@ int main() {
     std::string line;
     /* 1.Preprosessing: Read the name lists and store the intervals.*/
     while (std::getline(input_file, line)) {
-        std::stringstream line_ss(line);
+        std::stringstream input_ss(line);
+        std::stringstream line_ss;
+        char c;
+        while (input_ss.get(c)) {
+            if (c != ' ') {
+                line_ss << c;
+            }
+        }
         std::string username;
         std::getline(line_ss, username, ';');
 

@@ -59,7 +59,15 @@ int main() {
     std::string line;
     /* 1.Preprosessing: Read the name lists and store the intervals.*/
     while (std::getline(input_file, line)) {
-        std::stringstream line_ss(line);
+        std::stringstream input_ss(line);
+        std::stringstream line_ss;
+        char c;
+        while (input_ss.get(c)) {
+            if (c != ' ') {
+                line_ss << c;
+            }
+        }
+
         std::string username;
         std::getline(line_ss, username, ';');
 
